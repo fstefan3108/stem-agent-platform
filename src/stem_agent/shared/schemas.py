@@ -216,6 +216,22 @@ class ReasoningResult(BaseModel):
     )
 
 
+class SemanticFact(BaseModel):
+    """A distilled knowledge triple extracted from interactions.
+
+    Stored in semantic memory. Unlike episodes, facts are not tied to a
+    specific caller or timestamp — they represent global knowledge the
+    agent has learned about the world it operates in.
+    """
+
+    fact_id: str = Field(default_factory=_new_id)
+    subject: str = Field(description="The entity this fact is about, e.g. 'ACME Corp'.")
+    predicate: str = Field(description="The relationship or property, e.g. 'uses', 'located_in'.")
+    object: str = Field(description="The value or related entity, e.g. 'Salesforce'.")
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0, description="How certain the agent is about this fact.")
+    created_at: datetime = Field(default_factory=_utcnow)
+
+
 class Episode(BaseModel):
     """One recorded interaction, stored in episodic memory.
 
@@ -230,3 +246,14 @@ class Episode(BaseModel):
     timestamp: datetime = Field(default_factory=_utcnow)
     tools_used: list[str] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class MemoryContext(BaseModel):
+    """Assembled memory context passed to the Reason phase.
+
+    Built by MemoryManager.get_context() and injected into the pipeline
+    so the LLM has relevant history and knowledge before reasoning begins.
+    """
+
+    recent_episodes: list[Episode] = Field(default_factory=list)
+    semantic_facts: list[SemanticFact] = Field(default_factory=list)

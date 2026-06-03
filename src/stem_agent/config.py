@@ -14,7 +14,7 @@ class StemConfig(BaseSettings):
     openai_api_key: str = Field(..., description="OpenAI API key.")
     openai_model: str = Field("gpt-4o-mini", description="OpenAI model name used for all pipeline calls.")
 
-    db_url: str = Field(..., description="PostgreSQL DSN, e.g. postgresql://user:pass@localhost/stem_agent.")
+    db_path: str = Field(".stem_agent.db", description="Path to the SQLite database file StemAgent creates and manages.")
 
     system_context: str = Field(
         "You are a helpful AI assistant.",
