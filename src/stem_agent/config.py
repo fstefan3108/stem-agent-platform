@@ -22,3 +22,5 @@ class StemConfig(BaseSettings):
     )
     agent_name: str = Field("StemAgent", description="Human-readable name returned in the A2A agent card.")
     log_level: str = Field("INFO", description="Logging level: DEBUG, INFO, WARNING, ERROR.")
+
+settings = StemConfig()
