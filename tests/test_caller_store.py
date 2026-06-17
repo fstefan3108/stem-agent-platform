@@ -9,14 +9,19 @@ from stem_agent.shared.schemas import CallerProfile, StyleDimensions
 
 
 # ---------------------------------------------------------------------------
-# Fixture: in-memory SQLite connection
+# Fixture: minimal memory stub so CallerStore can borrow _db
 # ---------------------------------------------------------------------------
+
+class _FakeMemory:
+    def __init__(self, db):
+        self._db = db
+
 
 @pytest_asyncio.fixture
 async def store():
     conn = await aiosqlite.connect(":memory:")
     conn.row_factory = aiosqlite.Row
-    cs = CallerStore(conn)
+    cs = CallerStore(_FakeMemory(conn))
     await cs.initialize()
     yield cs
     await conn.close()
@@ -114,7 +119,7 @@ async def test_save_roundtrips_preferences(store):
 
 @pytest.mark.asyncio
 async def test_update_increments_interaction_count(store):
-    await store.load("alice")  # create profile
+    await store.load("alice")
     await store.update_from_interaction("alice", {})
     profile = await store.load("alice")
     assert profile.interaction_count == 1

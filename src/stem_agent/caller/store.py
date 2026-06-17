@@ -1,15 +1,19 @@
 """CallerStore: load/save caller profiles with EMA-based learning in SQLite."""
 
 import json
-from aiosqlite import Connection
+
 from stem_agent.shared.schemas import CallerProfile, StyleDimensions
 
 _EMA_ALPHA = 0.1
 
 
 class CallerStore:
-    def __init__(self, db: Connection):
-        self._db = db
+    def __init__(self, memory) -> None:
+        self._memory = memory
+
+    @property
+    def _db(self):
+        return self._memory._db
 
     async def initialize(self) -> None:
         await self._db.execute("""
