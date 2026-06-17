@@ -39,8 +39,8 @@ class StemAgent:
 
         self.config = config
 
-        self._memory: MemoryManager = MemoryManager(db_url=config.db_url)
-        self._caller_store: CallerStore = CallerStore(db_url=config.db_url)
+        self._memory: MemoryManager = MemoryManager(db_path=config.db_path)
+        self._caller_store: CallerStore = CallerStore(self._memory)
         self._tool_registry: ToolRegistry = ToolRegistry()
         self._tool_executor: ToolExecutor = ToolExecutor(registry=self._tool_registry)
         self._core: AgentCore = AgentCore(
