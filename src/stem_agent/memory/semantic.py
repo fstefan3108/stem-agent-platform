@@ -5,7 +5,7 @@ from stem_agent.shared.schemas import SemanticFact
 
 
 class SemanticMemory:
-    def __init__(self, db: Connection) -> None:
+    def __init__(self, db: Connection):
         self._db = db
 
     async def initialize(self) -> None:

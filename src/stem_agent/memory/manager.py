@@ -9,7 +9,7 @@ from stem_agent.shared.schemas import Episode, MemoryContext, SemanticFact
 
 
 class MemoryManager:
-    def __init__(self, db_path: str) -> None:
+    def __init__(self, db_path: str):
         self._db_path = db_path
         self._db = None             
 

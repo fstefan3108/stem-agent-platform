@@ -16,7 +16,7 @@ def _compute_maturity(activation_count: int) -> str:
 
 
 class ProceduralMemory:
-    def __init__(self, db: Connection) -> None:
+    def __init__(self, db: Connection):
         self._db = db
 
     async def initialize(self) -> None:
@@ -96,6 +96,7 @@ class ProceduralMemory:
             entities_pattern=entities,
             tool_sequence=tool_sequence,
         )
+        
         await self._db.execute(
             """
             INSERT INTO skills

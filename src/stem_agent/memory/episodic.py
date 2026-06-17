@@ -8,7 +8,7 @@ from stem_agent.shared.schemas import Episode
 
 
 class EpisodicMemory:
-    def __init__(self, db: Connection) -> None:
+    def __init__(self, db: Connection):
         self._db = db
 
     async def initialize(self) -> None:
@@ -51,4 +51,10 @@ class EpisodicMemory:
         ) as cursor:
             rows = await cursor.fetchall()
 
-        return [Episode(**dict(row)) for row in rows]
+        result = []
+        for row in rows:
+            data = dict(row)
+            data["tools_used"] = json.loads(data["tools_used"])
+            data["metadata"] = json.loads(data["metadata"])
+            result.append(Episode(**data))
+        return result
