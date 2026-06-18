@@ -40,19 +40,22 @@ class ProceduralMemory:
             SELECT * FROM skills
             WHERE intent_pattern = ? AND maturity = 'mature'
             ORDER BY success_count DESC
-            LIMIT 1
             """,
             (intent,),
         ) as cursor:
-            row = await cursor.fetchone()
+            rows = await cursor.fetchall()
 
-        if row is None:
-            return None
+        request_keys = set(entities.keys())
+        for row in rows:
+            entities_pattern = json.loads(row["entities_pattern"])
+            if set(entities_pattern.keys()) != request_keys:
+                continue
+            data = dict(row)
+            data["entities_pattern"] = entities_pattern
+            data["tool_sequence"] = json.loads(data["tool_sequence"])
+            return SkillRecord(**data)
 
-        data = dict(row)
-        data["entities_pattern"] = json.loads(data["entities_pattern"])
-        data["tool_sequence"] = json.loads(data["tool_sequence"])
-        return SkillRecord(**data)
+        return None
 
     async def record_activation(self, skill_id: str, success: bool) -> None:
         async with self._db.execute(

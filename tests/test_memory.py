@@ -249,6 +249,38 @@ async def test_procedural_find_match_no_mature_skill(procedural):
     assert result is None
 
 
+async def _mature_skill(procedural, intent, entities, tool_sequence):
+    """Create a skill and drive it to 10 activations so it becomes mature."""
+    await procedural.promote_or_create(intent, entities, tool_sequence)
+    async with procedural._db.execute(
+        "SELECT skill_id FROM skills WHERE intent_pattern = ?", (intent,)
+    ) as cursor:
+        row = await cursor.fetchone()
+    skill_id = row["skill_id"]
+    for _ in range(9):
+        await procedural.record_activation(skill_id, success=True)
+    return skill_id
+
+
+@pytest.mark.asyncio
+async def test_procedural_find_match_entity_keys_match_ignoring_values(procedural):
+    """A mature skill matches when entity keys are the same, even if values differ."""
+    await _mature_skill(procedural, "task", {"account_id": "4821"}, ["delete_account"])
+
+    result = await procedural.find_match("task", {"account_id": "9999"})
+    assert result is not None
+    assert result.tool_sequence == ["delete_account"]
+
+
+@pytest.mark.asyncio
+async def test_procedural_find_match_entity_keys_mismatch_returns_none(procedural):
+    """A mature skill is rejected when the request's entity keys differ in shape."""
+    await _mature_skill(procedural, "task", {"account_id": "4821"}, ["delete_account"])
+
+    assert await procedural.find_match("task", {"order_id": "12"}) is None
+    assert await procedural.find_match("task", {}) is None
+
+
 # ---------------------------------------------------------------------------
 # MemoryManager (integration — uses a temp file DB)
 # ---------------------------------------------------------------------------
@@ -297,3 +329,24 @@ async def test_manager_get_context_no_subject_skips_semantic(manager):
 
     ctx = await manager.get_context("alice")  # no subject
     assert ctx.semantic_facts == []
+
+
+@pytest.mark.asyncio
+async def test_manager_find_skill_returns_mature_match(manager):
+    await manager.promote_or_create_skill("task", {"account_id": "1"}, ["delete_account"])
+    async with manager._db.execute(
+        "SELECT skill_id FROM skills WHERE intent_pattern = 'task'"
+    ) as cursor:
+        row = await cursor.fetchone()
+    skill_id = row["skill_id"]
+    for _ in range(9):
+        await manager.record_skill_activation(skill_id, success=True)
+
+    result = await manager.find_skill("task", {"account_id": "2"})
+    assert result is not None
+    assert result.tool_sequence == ["delete_account"]
+
+
+@pytest.mark.asyncio
+async def test_manager_find_skill_returns_none_when_absent(manager):
+    assert await manager.find_skill("task", {}) is None

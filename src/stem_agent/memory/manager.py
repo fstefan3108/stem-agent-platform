@@ -5,7 +5,7 @@ import aiosqlite
 from stem_agent.memory.episodic import EpisodicMemory
 from stem_agent.memory.procedural import ProceduralMemory
 from stem_agent.memory.semantic import SemanticMemory
-from stem_agent.shared.schemas import Episode, MemoryContext, SemanticFact
+from stem_agent.shared.schemas import Episode, MemoryContext, SemanticFact, SkillRecord
 
 
 class MemoryManager:
@@ -43,6 +43,9 @@ class MemoryManager:
 
     async def store_semantic_fact(self, fact: SemanticFact) -> None:
         await self.semantic.save(fact)
+
+    async def find_skill(self, intent: str, entities: dict) -> SkillRecord | None:
+        return await self.procedural.find_match(intent, entities)
 
     async def record_skill_activation(self, skill_id: str, success: bool) -> None:
         await self.procedural.record_activation(skill_id, success)
