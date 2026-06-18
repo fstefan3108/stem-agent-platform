@@ -83,7 +83,10 @@ class PerceptionResult(BaseModel):
     before reasoning begins.
     """
 
-    intent: str = Field(description="Classified intent, one of the 10 intent categories.")
+    intent: Literal[
+        "question", "task", "analysis", "creative", "debug",
+        "search", "data", "config", "chitchat", "unknown",
+    ] = Field(description="Classified intent, one of the 10 intent categories.")
     entities: dict[str, Any] = Field(
         default_factory=dict,
         description="Extracted named entities, e.g. {'location': 'Belgrade'}",
