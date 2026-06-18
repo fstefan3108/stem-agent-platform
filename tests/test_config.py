@@ -17,7 +17,7 @@ def test_valid_config_minimal():
 def test_missing_api_key_raises(monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     with pytest.raises(ValidationError):
-        StemConfig()
+        StemConfig(_env_file=None)
 
 
 def test_db_path_default():

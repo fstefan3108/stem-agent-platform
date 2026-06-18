@@ -40,3 +40,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Scratch / throwaway scripts
+scratch_*.py

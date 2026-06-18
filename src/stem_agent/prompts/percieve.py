@@ -16,12 +16,20 @@ INTENT — classify into exactly one of these ten categories:
   unknown        : the message does not fit any category above
 
 ENTITIES — extract named items the message refers to: people, products, locations,
-identifiers, dates, etc.  Return as a flat key→value dict.  Omit if none are present.
+identifiers, dates, etc.  Return each as a name/value pair (name = the kind of
+entity, value = its value).  Return an empty list if none are present.
 
 COMPLEXITY — estimate the effort required:
-  simple  : a single lookup or one-step action
+  simple  : a single lookup or one-step action with no side effects
   medium  : a few steps, some context needed
   complex : multi-step, requires planning or domain knowledge
+  Raise the level when stakes are high, even for a short request:
+    - a destructive or irreversible action (delete, drop, cancel, deploy,
+      refund, charge) is at least medium
+    - anything affecting production, real money, or multiple records is at
+      least medium
+    - diagnosing a failure (a bug, an outage) is at least medium, since the
+      cause is not yet known
 
 URGENCY — true only if the message explicitly signals time pressure
 (e.g. "ASAP", "urgent", "right now", "deadline today").

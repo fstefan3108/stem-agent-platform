@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from stem_agent.agent_core.perceive import perceive
+from stem_agent.agent_core.perceive import _Entity, _PerceptionResponse, perceive
 from stem_agent.shared.schemas import AgentMessage, PerceptionResult
 
 
@@ -47,20 +47,43 @@ async def test_perceive_returns_perception_result():
 
 
 @pytest.mark.asyncio
-async def test_perceive_returns_parsed_field_not_raw_response():
-    """Must return response.choices[0].message.parsed, not the whole response object."""
-    expected = PerceptionResult(intent="task", complexity="medium", urgency=True)
+async def test_perceive_returns_values_from_parsed_not_raw_response():
+    """Must return a PerceptionResult built from the parsed fields, not the raw response."""
+    parsed = _PerceptionResponse(intent="task", complexity="medium", urgency=True)
 
     with patch("stem_agent.agent_core.perceive.AsyncOpenAI") as mock_cls:
         mock_client = MagicMock()
         mock_cls.return_value = mock_client
         mock_client.beta.chat.completions.parse = AsyncMock(
-            return_value=_mock_parse_response(expected)
+            return_value=_mock_parse_response(parsed)
         )
 
         result = await perceive(_make_message(), api_key="sk-test", model="gpt-4o-mini")
 
-    assert result is expected
+    assert isinstance(result, PerceptionResult)
+    assert result.intent == "task"
+    assert result.complexity == "medium"
+    assert result.urgency is True
+
+
+@pytest.mark.asyncio
+async def test_perceive_converts_entity_list_to_dict():
+    """The wire model returns entities as a list of name/value pairs; perceive flattens to a dict."""
+    parsed = _PerceptionResponse(
+        intent="search",
+        entities=[_Entity(name="location", value="Belgrade")],
+    )
+
+    with patch("stem_agent.agent_core.perceive.AsyncOpenAI") as mock_cls:
+        mock_client = MagicMock()
+        mock_cls.return_value = mock_client
+        mock_client.beta.chat.completions.parse = AsyncMock(
+            return_value=_mock_parse_response(parsed)
+        )
+
+        result = await perceive(_make_message(), api_key="sk-test", model="gpt-4o-mini")
+
+    assert result.entities == {"location": "Belgrade"}
 
 
 # ---------------------------------------------------------------------------
@@ -161,7 +184,8 @@ async def test_perceive_uses_perception_result_as_response_format():
         await perceive(_make_message(), api_key="sk-test", model="gpt-4o-mini")
 
     call_kwargs = parse_mock.call_args.kwargs
-    assert call_kwargs["response_format"] is PerceptionResult
+    assert call_kwargs["response_format"] is _PerceptionResponse
+    assert issubclass(_PerceptionResponse, PerceptionResult)
 
 
 # ---------------------------------------------------------------------------
